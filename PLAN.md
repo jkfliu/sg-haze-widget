@@ -127,8 +127,10 @@ This part can only be tested on a phone, so keep it small.
   3. updates the version number in `version.json`
   4. reminds me to update `CHANGELOG.md` and push
 
+## For consideration later
+- **(Phase 5?)** Lock screen circular and inline widgets (`accessoryCircular`, `accessoryInline`), alongside `accessoryRectangular`
+- **(Phase 8)** Notifications or alerts when a threshold is crossed
+
 ## Out of scope for now
-- Lock screen circular and inline widgets
-- Notifications or alerts when a threshold is crossed
 - A large widget size
 - Android support (could reuse `core.js` with Tasker later)

@@ -12,6 +12,7 @@ Changes to the original plan, agreed on 2026-10-24.
 | 6 | Gap fixture | Use a real day with missing hours if one turns up in the last 30 days. Otherwise make a labelled synthetic fixture from a real day with hours removed. |
 | 7 | Caching yesterday | Not done. Each refresh fetches today, yesterday and latest PSI (3 requests). |
 | 8 | Git | Repo set up in Phase 1, with a first commit after review. |
+| 9 | Later features | Lock screen circular and inline widgets (possibly Phase 5) and threshold alerts (Phase 8) moved from "out of scope" to "for consideration later" in PLAN.md (2026-10-24). |
 
 ## Technical fixes (no decision needed)
 
