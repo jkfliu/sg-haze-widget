@@ -3,12 +3,19 @@
 const {
   normaliseRegion, parsePm25Series, parseLatestPsi, sgtDateStrings, rolling24h, nextRefresh,
   isStale, pm25Band, psiBand, chartPoints, chartBands, formatUpdated, formatChecked,
+  compareVersions, parseManifest, shouldCheckForUpdate, updateUrl, isPlausibleUpdate,
 } = require('./core.js');
+
+// Both set by scripts/build.js from package.json; the repo is fixed in the published script.
+const VERSION = 'dev';
+const UPDATE_REPO = '';
 
 const API_BASE = 'https://api-open.data.gov.sg/v2/real-time/api';
 const HAZE_URL = 'https://www.haze.gov.sg';
 const KEYCHAIN_KEY = 'sg-haze.api-key';
 const CACHE_FILE = 'sg-haze-cache.json';
+const SETTINGS_FILE = 'sg-haze-settings.json';
+const BACKUP_NAME = 'SG Haze (previous).js';
 const CHART_SPAN = 24 * 3600e3;
 const CHART_LINE = '#000000';
 
@@ -30,18 +37,21 @@ async function fetchJson(endpoint, date) {
   return json;
 }
 
-function cachePath() {
+function localPath(name) {
   const fm = FileManager.local();
-  return fm.joinPath(fm.documentsDirectory(), CACHE_FILE);
+  return fm.joinPath(fm.documentsDirectory(), name);
 }
 
-function readCache() {
+function readJsonFile(name) {
   try {
-    return JSON.parse(FileManager.local().readString(cachePath())) ?? {};
+    return JSON.parse(FileManager.local().readString(localPath(name))) ?? {};
   } catch (e) {
     return {};
   }
 }
+
+const writeJsonFile = (name, value) => FileManager.local().writeString(localPath(name), JSON.stringify(value));
+const readCache = () => readJsonFile(CACHE_FILE);
 
 // { series, psi, fetchedAt, failed } for the region, falling back to the cache when a request fails.
 async function loadData(region, now) {
@@ -57,12 +67,80 @@ async function loadData(region, now) {
       fetchedAt: now,
     };
     cache[region] = data;
-    FileManager.local().writeString(cachePath(), JSON.stringify(cache));
+    writeJsonFile(CACHE_FILE, cache);
     return { ...data, failed: false };
   } catch (e) {
     console.error(`SG Haze: ${e}`);
     return cache[region] ? { ...cache[region], failed: true } : null;
   }
+}
+
+// --- Updates (on by default; see README "For friends") ---
+
+// null in a dev build (no repo set), which turns all update features off.
+const UPDATE_URLS = updateUrl(UPDATE_REPO);
+
+// Settings: { updateChecks: boolean, lastChecked: ms, latest: { version, notes } }
+// Update checks are on unless turned off in the menu (DECISIONS.md #16).
+const readSettings = () => ({ updateChecks: true, ...readJsonFile(SETTINGS_FILE) });
+const writeSettings = (settings) => writeJsonFile(SETTINGS_FILE, settings);
+
+// The response body as text; throws on a non-200 status.
+async function loadText(url, timeout) {
+  const req = new Request(url);
+  req.timeoutInterval = timeout;
+  const text = await req.loadString();
+  if (req.response.statusCode !== 200) throw new Error(`HTTP ${req.response.statusCode}`);
+  return text;
+}
+
+// Fetches version.json and records it. Only reads the manifest: nothing is installed here.
+async function checkForUpdate(settings, now) {
+  settings.lastChecked = now; // even on failure, so a broken network doesn't mean a check every refresh
+  try {
+    const manifest = parseManifest(await loadText(UPDATE_URLS.manifest, 10));
+    if (manifest) settings.latest = manifest;
+  } catch (e) {
+    console.error(`SG Haze update check: ${e}`);
+  }
+  writeSettings(settings);
+}
+
+const updateDue = (settings, now) =>
+  Boolean(UPDATE_URLS) && settings.updateChecks && shouldCheckForUpdate(settings.lastChecked, now);
+
+// Whether to show "update" in the widget and offer Install in the app.
+const showUpdate = (settings) =>
+  Boolean(UPDATE_URLS) && settings.updateChecks && compareVersions(settings.latest?.version, VERSION) === 1;
+
+// The FileManager that owns a path: iCloud if it's in Scriptable's iCloud folder, else local.
+function fileManagerFor(path) {
+  try {
+    const icloud = FileManager.iCloud();
+    if (path.startsWith(icloud.documentsDirectory())) return icloud;
+  } catch (e) {
+    // iCloud is off for Scriptable, so the script must be stored locally.
+  }
+  return FileManager.local();
+}
+
+// Downloads the new script, checks it, backs up the current one, then overwrites it.
+// Throws with a readable message on any failure, leaving the current script untouched.
+async function installUpdate(latest) {
+  let source;
+  try {
+    source = await loadText(UPDATE_URLS.script, 30);
+  } catch (e) {
+    throw new Error(`Download failed (${e.message ?? e}).`);
+  }
+  const check = isPlausibleUpdate(source, latest.version, VERSION);
+  if (!check.ok) throw new Error(check.reason);
+
+  // Overwrite this script wherever it's stored, iCloud or on the device (DECISIONS.md #4).
+  const self = module.filename;
+  const fm = fileManagerFor(self);
+  fm.writeString(self.replace(/[^/]+$/, BACKUP_NAME), fm.readString(self));
+  fm.writeString(self, source);
 }
 
 // Everything the layouts show, derived once.
@@ -148,6 +226,8 @@ function addHeader(stack, view) {
   addText(row, view.region, Font.semiboldSystemFont(12));
   row.addSpacer();
   if (view.stale) addText(row, '⚠ stale', Font.mediumSystemFont(10), new Color('#f28c28'));
+  if (view.stale && view.update) row.addSpacer(4);
+  if (view.update) addText(row, '↑ update', Font.mediumSystemFont(10), new Color('#2e86de'));
 }
 
 // --- Layouts ---
@@ -197,12 +277,12 @@ function buildRectangular(w, view) {
   addText(w, status, Font.systemFont(10));
 }
 
-function buildWidget(family, region, data, now) {
+function buildWidget(family, region, data, now, update = false) {
   const w = new ListWidget();
   w.backgroundColor = BG;
   w.url = HAZE_URL;
   w.refreshAfterDate = nextRefresh(now);
-  const view = viewModel(region, data, now);
+  const view = { ...viewModel(region, data, now), update };
   if (family === 'small') buildSmall(w, view, now);
   else if (family?.startsWith('accessory')) buildRectangular(w, view);
   else buildMedium(w, view, now); // medium, plus large until it gets its own layout
@@ -223,19 +303,73 @@ async function promptForApiKey() {
   if (key) Keychain.set(KEYCHAIN_KEY, key);
 }
 
+async function showMessage(title, message) {
+  const a = new Alert();
+  a.title = title;
+  a.message = message;
+  a.addAction('OK');
+  await a.present();
+}
+
+// true if the user taps `ok`.
+async function confirm(title, message, ok, cancel = 'Cancel') {
+  const a = new Alert();
+  a.title = title;
+  a.message = message;
+  a.addAction(ok);
+  a.addCancelAction(cancel);
+  return (await a.present()) === 0;
+}
+
+async function toggleUpdateChecks(settings, now) {
+  if (settings.updateChecks) {
+    settings.updateChecks = false;
+    writeSettings(settings);
+    return;
+  }
+  const message = `Once a day, SG Haze will look for a new version at github.com/${UPDATE_REPO}. `
+    + 'Nothing installs by itself. If you tap Install, the new script downloaded from that repo '
+    + 'replaces this one and runs on your phone.';
+  if (!(await confirm('Turn on update checks?', message, 'Turn on'))) return;
+  settings.updateChecks = true;
+  await checkForUpdate(settings, now);
+}
+
+async function offerUpdate(settings) {
+  const { version, notes } = settings.latest;
+  const message = `${notes || 'No release notes.'}\n\nInstalled: ${VERSION}. The current script is kept as "${BACKUP_NAME}".`;
+  if (!(await confirm(`Update to ${version}?`, message, 'Install update', 'Not now'))) return;
+  try {
+    await installUpdate(settings.latest);
+    await showMessage('Update installed', `SG Haze ${version} is installed. Run the script again to use it.`);
+  } catch (e) {
+    await showMessage('Update not installed', `${e.message ?? e}\n\nYour current script hasn't changed.`);
+  }
+}
+
 async function runInApp(region, now) {
   const data = await loadData(region, now);
+  const settings = readSettings();
   for (;;) {
     const hasKey = Keychain.contains(KEYCHAIN_KEY);
+    const update = showUpdate(settings);
     const menu = new Alert();
     menu.title = 'SG Haze';
-    menu.message = `Region: ${region} (set per widget in its Parameter field)\nAPI key: ${hasKey ? 'set' : 'not set'}`;
+    menu.message = [
+      `Version ${VERSION}${update ? ` (${settings.latest.version} available)` : ''}`,
+      `Region: ${region} (set per widget in its Parameter field)`,
+      `API key: ${hasKey ? 'set' : 'not set'}`,
+      ...(UPDATE_URLS ? [`Update checks: ${settings.updateChecks ? 'on' : 'off'}`] : []),
+    ].join('\n');
     const actions = [
-      ['Preview medium widget', () => buildWidget('medium', region, data, now).presentMedium()],
-      ['Preview small widget', () => buildWidget('small', region, data, now).presentSmall()],
+      ...(update ? [[`Install update ${settings.latest.version}`, () => offerUpdate(settings)]] : []),
+      ['Preview medium widget', () => buildWidget('medium', region, data, now, update).presentMedium()],
+      ['Preview small widget', () => buildWidget('small', region, data, now, update).presentSmall()],
       ['Preview lock screen widget',
-        () => buildWidget('accessoryRectangular', region, data, now).presentAccessoryRectangular()],
+        () => buildWidget('accessoryRectangular', region, data, now, update).presentAccessoryRectangular()],
       [hasKey ? 'Change API key' : 'Set API key', promptForApiKey],
+      ...(UPDATE_URLS ? [[settings.updateChecks ? 'Turn off update checks' : 'Turn on update checks',
+        () => toggleUpdateChecks(settings, now)]] : []),
     ];
     for (const [label] of actions) menu.addAction(label);
     if (hasKey) {
@@ -254,7 +388,13 @@ async function runInApp(region, now) {
 const now = Date.now();
 const region = normaliseRegion(args.widgetParameter);
 if (config.runsInWidget) {
-  Script.setWidget(buildWidget(config.widgetFamily, region, await loadData(region, now), now));
+  const settings = readSettings();
+  // The update check runs alongside the data fetch, so it never delays the refresh.
+  const [, data] = await Promise.all([
+    updateDue(settings, now) ? checkForUpdate(settings, now) : null,
+    loadData(region, now),
+  ]);
+  Script.setWidget(buildWidget(config.widgetFamily, region, data, now, showUpdate(settings)));
 } else {
   await runInApp(region, now);
 }

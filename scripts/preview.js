@@ -8,7 +8,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const { execFile } = require('node:child_process');
-const { bundle } = require('./build.js');
+const { buildBundle } = require('./build.js');
 const { sgtDateStrings } = require('../src/core.js');
 
 const ROOT = path.join(__dirname, '..');
@@ -319,8 +319,7 @@ ${sections}
 
 // Builds the page for a region. `source` overrides the bundle (used by tests).
 async function renderPreview({ region = '', live = false, source } = {}) {
-  const read = (rel) => fs.readFileSync(path.join(ROOT, rel), 'utf8');
-  const script = source ?? bundle(read('src/core.js'), read('src/widget.js'));
+  const script = source ?? buildBundle();
   const now = live ? Date.now() : FIXTURE_NOW;
   const online = live ? liveResponder() : fixtureResponder;
   const rows = [];

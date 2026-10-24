@@ -18,6 +18,8 @@ Changes to the original plan, agreed on 2026-10-24.
 | 12 | Chart style | Black line over pastel background bands for NEA's four PM2.5 levels (Normal/Elevated/High/Very High), from the same table as `pm25Band`. Replaces faint lines at 55 and 150. |
 | 13 | Chart label | The footer says what the chart shows: "PM2.5 24h · Updated 3:00pm". |
 | 14 | Mac preview | `npm run preview -- <region> [--live]` writes `dist/preview.html`: the real bundle rendered with stand-in Scriptable classes, in light/dark and normal/offline states. An approximation; the phone has the final say. |
+| 15 | Update source | Updates come from the public repo `jkfliu/sg-haze-widget` (`updateRepo` in package.json, fixed in the build). `dist/` stays untracked, so each release copies the bundle to a tracked `release/SG Haze.js`. The updater reads `version.json` and `release/SG Haze.js` on `main`. |
+| 16 | Update checks default | Update checks are **on by default** for everyone (PLAN.md said off), and can be turned off in the in-app menu. Installing still only happens when the user taps Install. |
 
 ## Technical fixes (no decision needed)
 
