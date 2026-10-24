@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SG Haze Widget</title>
+<meta name="description" content="Set up the SG Haze widget for iPhone: Singapore PM2.5 and PSI for your region, using the free Scriptable app.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: one narrow phone-first column; a mock widget up top, then numbered setup steps, then reference. */
+:root {
+  --bg: #eef1f3;          /* hazy sky */
+  --surface: #ffffff;
+  --fg: #1b2328;
+  --muted: #5d6a72;
+  --line: #d3dade;
+  --accent: #1f6f8b;      /* clear-day blue, a little hazed */
+  --accent-fg: #ffffff;
+  --code-bg: #e3e8eb;
+  --widget-bg: #ffffff;
+  --widget-fg: #111111;
+  --widget-muted: #6e6e73;
+  /* NEA band colours, as the widget uses them */
+  --normal: #3fae49; --elevated: #f4c430; --high: #f28c28; --vhigh: #d7263d; --moderate: #2e86de;
+  --t-normal: #c8e6c9; --t-elevated: #fff1b8;
+  --display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --body: "Atkinson Hyperlegible", -apple-system, system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12171a; --surface: #1b2226; --fg: #e6ecef; --muted: #98a5ac; --line: #2c363b;
+  --accent: #5fb4d3; --accent-fg: #0b1316; --code-bg: #232c31;
+  --widget-bg: #1c1c1e; --widget-fg: #f2f2f7; --widget-muted: #98989d; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #12171a; --surface: #1b2226; --fg: #e6ecef; --muted: #98a5ac; --line: #2c363b;
+  --accent: #5fb4d3; --accent-fg: #0b1316; --code-bg: #232c31;
+  --widget-bg: #1c1c1e; --widget-fg: #f2f2f7; --widget-muted: #98989d; color-scheme: dark }
+
+body { margin: 0; background: var(--bg); color: var(--fg); font: 17px/1.55 var(--body); }
+[hidden] { display: none !important; }
+.wrap { max-width: 40rem; margin: 0 auto; padding-block: 2.5rem 4rem;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 2.75rem; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.1; }
+h1 { font-size: clamp(2.2rem, 8vw, 3rem); letter-spacing: -0.02em; }
+h2 { font-size: 1.45rem; }
+p { margin: 0; }
+a { color: var(--accent); }
+code, .mono { font-family: var(--mono); font-size: 0.88em; }
+code { background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 4px; }
+b { font-weight: 700; }
+
+.hero { display: grid; gap: 1.5rem; }
+.lede { font-size: 1.1rem; color: var(--muted); max-width: 34rem; }
+.eyebrow { font: 600 0.75rem/1 var(--body); text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+
+/* Mock of the medium widget, sample values */
+.mock { display: grid; gap: 0.5rem; justify-items: start; }
+.widget { width: min(100%, 22rem); background: var(--widget-bg); color: var(--widget-fg); border-radius: 22px;
+  padding: 14px 16px 12px; box-shadow: 0 1px 2px rgb(0 0 0 / .08), 0 8px 24px rgb(20 40 50 / .12);
+  display: grid; gap: 6px; font-family: -apple-system, system-ui, sans-serif; }
+.w-head { font-size: 13px; font-weight: 600; }
+.w-row { display: flex; gap: 40px; }
+.w-read { display: grid; gap: 1px; }
+.w-lab { font-size: 10px; color: var(--widget-muted); font-weight: 500; }
+.w-num { font-size: 26px; font-weight: 700; line-height: 1.05; font-family: ui-rounded, -apple-system, system-ui, sans-serif; font-variant-numeric: tabular-nums; }
+.w-band { font-size: 10px; color: var(--widget-muted); display: flex; gap: 4px; align-items: center; }
+.dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; flex: none; }
+.w-chart { width: 100%; height: 38px; display: block; }
+.w-foot { display: flex; justify-content: space-between; font-size: 9.5px; color: var(--widget-muted); }
+.caption { font-size: 0.82rem; color: var(--muted); }
+
+/* Steps */
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 1.75rem; counter-reset: step; }
+.step { display: grid; grid-template-columns: 2.25rem minmax(0, 1fr); gap: 0 0.9rem; counter-increment: step; }
+.step::before { content: counter(step); font: 700 1.15rem/2.1rem var(--display); text-align: center;
+  width: 2.1rem; height: 2.1rem; border-radius: 50%; border: 1.5px solid var(--accent); color: var(--accent); }
+.step > div { display: grid; gap: 0.6rem; min-width: 0; }
+.step h3 { margin: 0; font: 700 1.1rem/2.1rem var(--display); }
+.step ul { margin: 0; padding-left: 1.1rem; display: grid; gap: 0.5rem; }
+
+.btn { appearance: none; border: 0; cursor: pointer; justify-self: start;
+  background: var(--accent); color: var(--accent-fg); font: 700 1rem/1 var(--body);
+  padding: 0.85rem 1.25rem; border-radius: 12px; display: inline-flex; align-items: center; gap: 0.5rem; }
+.btn:disabled { opacity: 0.6; cursor: progress; }
+.btn:focus-visible, .chip:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.btn-row { display: flex; flex-wrap: wrap; gap: 0.75rem 1rem; align-items: center; }
+.status { font-size: 0.9rem; color: var(--muted); min-height: 1.4em; }
+.status.ok { color: var(--normal); font-weight: 700; }
+
+details { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+summary { cursor: pointer; padding: 0.6rem 0.9rem; font-size: 0.92rem; color: var(--muted); }
+textarea { display: block; box-sizing: border-box; width: 100%; height: 14rem; resize: vertical; border: 0;
+  border-top: 1px solid var(--line); border-radius: 0 0 10px 10px; padding: 0.75rem;
+  background: var(--code-bg); color: var(--fg); font: 12px/1.45 var(--mono); }
+
+/* Regions */
+.regions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.chip { appearance: none; cursor: pointer; font: 500 0.95rem/1 var(--mono); color: var(--fg);
+  background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.55rem 0.9rem; }
+.chip.copied { border-color: var(--normal); color: var(--normal); }
+.note { font-size: 0.92rem; color: var(--muted); }
+
+section { display: grid; gap: 1rem; }
+.bands-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.95rem; }
+th, td { text-align: left; padding: 0.5rem 0.75rem 0.5rem 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 700; }
+td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.band { display: inline-flex; gap: 0.45rem; align-items: center; white-space: nowrap; }
+.faq { display: grid; gap: 1rem; }
+.faq p b { display: block; }
+footer { font-size: 0.85rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 1.25rem; }
+@media (prefers-reduced-motion: no-preference) { .btn, .chip { transition: transform .1s; } .btn:active, .chip:active { transform: scale(.97); } }
+</style>
+</head>
+<body>
+
+<main class="wrap">
+  <header class="hero">
+    <p class="eyebrow">For iPhone · Free · About 3 minutes</p>
+    <h1>SG Haze widget</h1>
+    <p class="lede">A home screen and lock screen widget with the latest PM2.5 and PSI for your part of Singapore, plus a chart of PM2.5 over the last 24 hours. The readings come from NEA through data.gov.sg.</p>
+    <div class="mock">
+      <div class="widget" role="img" aria-label="Example medium widget: West, PM2.5 18 Normal, PSI 42 Good, with a 24-hour chart">
+        <div class="w-head">West</div>
+        <div class="w-row">
+          <div class="w-read"><span class="w-lab">PM2.5 1h</span><span class="w-num">18</span><span class="w-band"><span class="dot" style="background:var(--normal)"></span>Normal</span></div>
+          <div class="w-read"><span class="w-lab">PSI 24h</span><span class="w-num">42</span><span class="w-band"><span class="dot" style="background:var(--normal)"></span>Good</span></div>
+        </div>
+        <svg class="w-chart" viewBox="0 0 300 38" preserveAspectRatio="none" aria-hidden="true">
+          <rect x="0" y="0" width="300" height="3.5" fill="var(--t-elevated)"/>
+          <rect x="0" y="3.5" width="300" height="34.5" fill="var(--t-normal)"/>
+          <polyline fill="none" stroke="#000" stroke-width="1.5" points="0,29 12,30 25,31 37,31 50,30 62,28 75,27 87,25 100,23 112,24 125,26 137,28 150,29 162,30 175,31 187,30 200,28 212,26 225,24 237,25 250,27 262,28 275,27 287,26 300,27"/>
+        </svg>
+        <div class="w-foot"><span>PM2.5 24h · Updated 3:00pm</span><span>Checked 3:52pm</span></div>
+      </div>
+      <p class="caption">Example of the medium widget. These values are made up.</p>
+    </div>
+  </header>
+
+  <section aria-labelledby="setup">
+    <h2 id="setup">Set it up</h2>
+    <ol class="steps">
+      <li class="step"><div>
+        <h3>Install Scriptable</h3>
+        <p>Get <a href="https://apps.apple.com/app/scriptable/id1405459188">Scriptable</a> from the App Store. It's free and runs small scripts like this one.</p>
+      </div></li>
+
+      <li class="step"><div>
+        <h3>Copy the script</h3>
+        <p>Open this page on your iPhone and tap the button.</p>
+        <div class="btn-row">
+          <button class="btn" id="copy-script" type="button" disabled>Loading script…</button>
+          <span class="status" id="copy-status" role="status"></span>
+        </div>
+        <details id="script-box">
+          <summary>Show the script<span id="version"></span></summary>
+          <textarea id="script" readonly spellcheck="false" aria-label="SG Haze script"></textarea>
+        </details>
+        <p class="note" id="copy-help">If the button doesn't work, open <b>Show the script</b>, tap inside the box, then <b>Select All</b> and <b>Copy</b>.</p>
+        <p class="note" id="load-failed" hidden>The script didn't load. Open <a href="https://raw.githubusercontent.com/jkfliu/sg-haze-widget/main/release/SG%20Haze.js">the script on GitHub</a>, then long-press the text, tap <b>Select All</b> and <b>Copy</b>.</p>
+      </div></li>
+
+      <li class="step"><div>
+        <h3>Paste it into Scriptable</h3>
+        <p>Open Scriptable, tap <b>+</b> and paste. Tap the title at the top, rename it <b>SG Haze</b>, then tap <b>Done</b>.</p>
+      </div></li>
+
+      <li class="step"><div>
+        <h3>Add the widget</h3>
+        <ul>
+          <li><b>Home screen:</b> long-press an empty spot, tap <b>Edit → Add Widget</b>, choose <b>Scriptable</b>, pick small or medium, and add it. Long-press the new widget, tap <b>Edit Widget</b>, and set <b>Script</b> to <i>SG Haze</i>.</li>
+          <li><b>Lock screen:</b> long-press the lock screen, tap <b>Customize</b>, then the lock screen. Tap the widget area under the clock and add Scriptable's <b>rectangular</b> widget. <b>Close the widget gallery</b>, then tap the widget itself to set <b>Script</b>.</li>
+        </ul>
+      </div></li>
+
+      <li class="step"><div>
+        <h3>Pick your region</h3>
+        <p>In the same panel, type your region into <b>Parameter</b>. Tap a name to copy it:</p>
+        <div class="regions" id="regions">
+          <button class="chip" type="button">north</button>
+          <button class="chip" type="button">south</button>
+          <button class="chip" type="button">east</button>
+          <button class="chip" type="button">west</button>
+          <button class="chip" type="button">central</button>
+        </div>
+        <p class="note">Leave it blank for central. Anything it doesn't recognise also shows central, so check the region name at the top of the widget. Each widget has its own setting, so you can add one per region.</p>
+      </div></li>
+    </ol>
+  </section>
+
+  <section aria-labelledby="reading">
+    <h2 id="reading">Reading the widget</h2>
+    <p><b>PM2.5 1h</b> is the latest one-hour reading in µg/m³, and the chart shows the last 24 hours of it. <b>PSI 24h</b> is the 24-hour Pollutant Standards Index. The dots use these bands:</p>
+    <div class="bands-wrap">
+      <table>
+        <thead><tr><th>PM2.5 (µg/m³)</th><th>Band</th><th>PSI</th><th>Band</th></tr></thead>
+        <tbody>
+          <tr><td class="num">0–55</td><td><span class="band"><span class="dot" style="background:var(--normal)"></span>Normal</span></td><td class="num">0–50</td><td><span class="band"><span class="dot" style="background:var(--normal)"></span>Good</span></td></tr>
+          <tr><td class="num">56–150</td><td><span class="band"><span class="dot" style="background:var(--elevated)"></span>Elevated</span></td><td class="num">51–100</td><td><span class="band"><span class="dot" style="background:var(--moderate)"></span>Moderate</span></td></tr>
+          <tr><td class="num">151–250</td><td><span class="band"><span class="dot" style="background:var(--high)"></span>High</span></td><td class="num">101–200</td><td><span class="band"><span class="dot" style="background:var(--elevated)"></span>Unhealthy</span></td></tr>
+          <tr><td class="num">251+</td><td><span class="band"><span class="dot" style="background:var(--vhigh)"></span>Very High</span></td><td class="num">201–300</td><td><span class="band"><span class="dot" style="background:var(--high)"></span>Very Unhealthy</span></td></tr>
+          <tr><td></td><td></td><td class="num">301+</td><td><span class="band"><span class="dot" style="background:var(--vhigh)"></span>Hazardous</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">For health advice, tap the widget to open haze.gov.sg.</p>
+  </section>
+
+  <section aria-labelledby="faq">
+    <h2 id="faq">Good to know</h2>
+    <div class="faq">
+      <p><b>"Updated 3:00pm" is the hour of the reading.</b> NEA publishes each hour's reading about 45 minutes later, and the widget asks iOS to refresh at 50 minutes past each hour. iOS decides the exact timing, so it can be later.</p>
+      <p><b>"⚠ stale" means the reading is over two hours old.</b> This usually happens when your phone was offline or iOS hasn't refreshed the widget for a while.</p>
+      <p><b>"↑ update" means a new version is available.</b> Open SG Haze in Scriptable and tap <b>Install update</b>. You'll see what changed first. Nothing installs by itself. The update comes from <a href="https://github.com/jkfliu/sg-haze-widget">the project on GitHub</a>, and you can turn update checks off in the same menu.</p>
+      <p><b>The app always shows central.</b> When you run SG Haze inside Scriptable, it doesn't read a widget's Parameter. Only the widgets use your region.</p>
+    </div>
+  </section>
+
+  <footer>Created by <a href="https://github.com/jkfliu">Jason Liu</a>. Not an official NEA product. Source and full instructions: <a href="https://github.com/jkfliu/sg-haze-widget">github.com/jkfliu/sg-haze-widget</a></footer>
+</main>
+
+<script>
+(function () {
+  // Loaded from the repo on page open, so the page always offers the latest release.
+  const RAW = 'https://raw.githubusercontent.com/jkfliu/sg-haze-widget/main/';
+  const btn = document.getElementById('copy-script');
+  const status = document.getElementById('copy-status');
+  const box = document.getElementById('script-box');
+  const ta = document.getElementById('script');
+
+  async function loadText(path) {
+    const res = await fetch(RAW + path, { cache: 'no-cache' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return res.text();
+  }
+
+  // The script must be loaded before the tap: iOS only allows copying straight from a tap.
+  Promise.all([loadText('release/SG%20Haze.js'), loadText('version.json').catch(() => null)])
+    .then(([script, manifest]) => {
+      ta.value = script;
+      let version = null;
+      try { version = JSON.parse(manifest).version; } catch (e) { /* the version is only shown, not needed */ }
+      if (version) document.getElementById('version').textContent = ' (version ' + version + ')';
+      btn.disabled = false;
+      btn.textContent = 'Copy script';
+    })
+    .catch(() => {
+      btn.hidden = true;
+      box.hidden = true;
+      document.getElementById('copy-help').hidden = true;
+      document.getElementById('load-failed').hidden = false;
+    });
+
+  async function copyText(text) {
+    try { await navigator.clipboard.writeText(text); return true; } catch (e) { return false; }
+  }
+  btn.addEventListener('click', async () => {
+    if (await copyText(ta.value)) {
+      status.textContent = 'Copied. Now open Scriptable.';
+      status.className = 'status ok';
+    } else {
+      box.open = true;
+      ta.focus();
+      ta.select();
+      status.textContent = 'Copy was blocked. The script is selected below: tap Copy.';
+      status.className = 'status';
+    }
+  });
+  document.getElementById('regions').addEventListener('click', async (e) => {
+    const chip = e.target.closest('.chip');
+    if (!chip) return;
+    if (await copyText(chip.textContent)) {
+      document.querySelectorAll('.chip.copied').forEach((c) => c.classList.remove('copied'));
+      chip.classList.add('copied');
+    }
+  });
+})();
+</script>
+</body>
+</html>

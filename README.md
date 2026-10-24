@@ -10,7 +10,7 @@ Data comes from [data.gov.sg](https://data.gov.sg) (NEA). Tapping the widget ope
 
 ## For friends
 
-Someone sent you this widget? Here's how to set it up.
+Someone sent you this widget? Here's how to set it up. The [setup page](https://jkfliu.github.io/sg-haze-widget/) has the same steps for your iPhone, with a button that copies the script.
 
 ### 1. Install the script
 
