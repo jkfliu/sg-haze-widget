@@ -13,6 +13,11 @@ Changes to the original plan, agreed on 2026-10-24.
 | 7 | Caching yesterday | Not done. Each refresh fetches today, yesterday and latest PSI (3 requests). |
 | 8 | Git | Repo set up in Phase 1, with a first commit after review. |
 | 9 | Later features | Lock screen circular and inline widgets (possibly Phase 5) and threshold alerts (Phase 8) moved from "out of scope" to "for consideration later" in PLAN.md (2026-10-24). |
+| 10 | Build pulled forward | `scripts/build.js`, `scripts/deploy.sh` and the bundle tests were done in Phase 5 (from Phase 6) so the widget could be tried on the phone. The README is still in Phase 6. |
+| 11 | Medium layout | Medium uses the small layout stretched wide (header, numbers side by side, full-width chart, footer), not numbers-left/chart-right. |
+| 12 | Chart style | Black line over pastel background bands for NEA's four PM2.5 levels (Normal/Elevated/High/Very High), from the same table as `pm25Band`. Replaces faint lines at 55 and 150. |
+| 13 | Chart label | The footer says what the chart shows: "PM2.5 24h · Updated 3:00pm". |
+| 14 | Mac preview | `npm run preview -- <region> [--live]` writes `dist/preview.html`: the real bundle rendered with stand-in Scriptable classes, in light/dark and normal/offline states. An approximation; the phone has the final say. |
 
 ## Technical fixes (no decision needed)
 

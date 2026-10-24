@@ -74,11 +74,12 @@ function isStale(latestTime, now) {
 
 // Band tables. Source: NEA, haze.gov.sg ("1-hr PM2.5 concentration bands" and "PSI descriptors").
 // Thresholds to be checked against haze.gov.sg. Colours are our own picks, not NEA's.
+// `tint` is the pastel chart background for the band (see chartBands).
 const PM25_BANDS = [
-  { max: 55, name: 'Normal', colour: '#3fae49' },
-  { max: 150, name: 'Elevated', colour: '#f4c430' },
-  { max: 250, name: 'High', colour: '#f28c28' },
-  { max: Infinity, name: 'Very High', colour: '#d7263d' },
+  { max: 55, name: 'Normal', colour: '#3fae49', tint: '#c8e6c9' },
+  { max: 150, name: 'Elevated', colour: '#f4c430', tint: '#fff1b8' },
+  { max: 250, name: 'High', colour: '#f28c28', tint: '#ffd8a8' },
+  { max: Infinity, name: 'Very High', colour: '#d7263d', tint: '#f5b7b1' },
 ];
 const PSI_BANDS = [
   { max: 50, name: 'Good', colour: '#3fae49' },
@@ -103,6 +104,24 @@ const GAP_AFTER = 1.5 * HOUR; // readings further apart than this are not joined
 // Pixel y for a value. DrawContext's y grows downward, so 0 sits at the bottom.
 function chartY(value, yMax, height, padding) {
   return height - padding - (value / yMax) * (height - 2 * padding);
+}
+
+// Chart background rectangles for the NEA PM2.5 bands within 0..yMax, bottom band first.
+// Opaque pastel tints, because a drawn image can't follow light/dark mode and the black line
+// must read on both.
+function chartBands(yMax, width, height, padding) {
+  const bands = [];
+  let from = 0;
+  for (const { max, name, tint: colour } of PM25_BANDS) {
+    const to = Math.min(max, yMax);
+    if (to > from) {
+      const top = chartY(to, yMax, height, padding);
+      bands.push({ name, colour, x: padding, y: top, width: width - 2 * padding, height: chartY(from, yMax, height, padding) - top });
+    }
+    if (to >= yMax) break;
+    from = to;
+  }
+  return bands;
 }
 
 // Readings to pixel coordinates, split into segments wherever an hour is missing.
@@ -151,5 +170,5 @@ function formatChecked(time) {
 module.exports = {
   REGIONS, normaliseRegion, parsePm25Series, parseLatestPsi,
   sgtDateStrings, rolling24h, nextRefresh, isStale,
-  pm25Band, psiBand, chartY, chartPoints, formatUpdated, formatChecked,
+  pm25Band, psiBand, chartY, chartBands, chartPoints, formatUpdated, formatChecked,
 };

@@ -1,7 +1,7 @@
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const {
-  parsePm25Series, rolling24h, pm25Band, psiBand, chartPoints, chartY, formatUpdated, formatChecked,
+  parsePm25Series, rolling24h, pm25Band, psiBand, chartPoints, chartY, chartBands, formatUpdated, formatChecked,
 } = require('../src/core.js');
 const { fixture, sgt, mulberry32 } = require('./helpers.js');
 
@@ -70,6 +70,70 @@ describe('chartY', () => {
     assert.equal(chartY(0, 60, 100, 10), 90);
     assert.equal(chartY(60, 60, 100, 10), 10);
     assert.equal(chartY(30, 60, 100, 10), 50);
+  });
+});
+
+describe('chartBands', () => {
+  const close = (actual, expected) => assert.ok(Math.abs(actual - expected) < 1e-9, `${actual} != ${expected}`);
+  const names = (bands) => bands.map((b) => b.name);
+
+  test('a normal-day scale shows Normal with a strip of Elevated on top', () => {
+    const bands = chartBands(60, 100, 100, 10);
+    assert.deepEqual(names(bands), ['Normal', 'Elevated']);
+    // Plot area is y 10..90; 55 of 60 sits at y = 90 - 55/60 * 80.
+    const y55 = 90 - (55 / 60) * 80;
+    close(bands[0].y, y55); close(bands[0].height, 90 - y55);
+    close(bands[1].y, 10); close(bands[1].height, y55 - 10);
+  });
+
+  test('a scale of 200 shows Normal, Elevated and High', () => {
+    const bands = chartBands(200, 100, 100, 10);
+    assert.deepEqual(names(bands), ['Normal', 'Elevated', 'High']);
+    assert.deepEqual(bands.map((b) => [b.y, b.height]), [[68, 22], [30, 38], [10, 20]]);
+  });
+
+  test('a scale above 250 shows all four NEA bands, Very High on top', () => {
+    const bands = chartBands(300, 100, 100, 0);
+    assert.deepEqual(names(bands), ['Normal', 'Elevated', 'High', 'Very High']);
+    // 250..300 of 300 on a 100px plot is the top 50/3 px.
+    close(bands[3].y, 0); close(bands[3].height, 50 / 3);
+  });
+
+  test('a scale ending exactly on a boundary has no zero-height band above it', () => {
+    assert.deepEqual(names(chartBands(150, 100, 100, 0)), ['Normal', 'Elevated']);
+    assert.deepEqual(names(chartBands(250, 100, 100, 0)), ['Normal', 'Elevated', 'High']);
+  });
+
+  test('chart bands use the same names as pm25Band at each boundary', () => {
+    for (const [value, name] of [[55, 'Normal'], [150, 'Elevated'], [250, 'High'], [300, 'Very High']]) {
+      assert.equal(chartBands(value, 100, 100, 0).at(-1).name, name);
+      assert.equal(pm25Band(value).name, name);
+    }
+  });
+
+  test('each chart band has its own colour', () => {
+    const colours = chartBands(300, 100, 100, 0).map((b) => b.colour);
+    assert.equal(new Set(colours).size, 4);
+  });
+
+  test('bands span the padded width and use hex colours', () => {
+    for (const b of chartBands(200, 120, 50, 4)) {
+      assert.equal(b.x, 4);
+      assert.equal(b.width, 112);
+      assert.match(b.colour, HEX);
+    }
+  });
+
+  test('properties: bands stack without gaps and fill the plot height', () => {
+    const rand = mulberry32(55);
+    for (let run = 0; run < 200; run++) {
+      const yMax = 60 + Math.floor(rand() * 400);
+      const [h, p] = [20 + Math.floor(rand() * 200), Math.floor(rand() * 10)];
+      const bands = chartBands(yMax, 100, h, p);
+      close(bands[0].y + bands[0].height, h - p); // starts at the bottom edge
+      close(bands.at(-1).y, p); // ends at the top edge
+      for (let i = 1; i < bands.length; i++) close(bands[i].y + bands[i].height, bands[i - 1].y);
+    }
   });
 });
 
