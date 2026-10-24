@@ -1,0 +1,269 @@
+{
+  "code": 0,
+  "data": {
+    "regionMetadata": [
+      {
+        "name": "north",
+        "labelLocation": {
+          "latitude": 1.41803,
+          "longitude": 103.82
+        }
+      },
+      {
+        "name": "south",
+        "labelLocation": {
+          "latitude": 1.29587,
+          "longitude": 103.82
+        }
+      },
+      {
+        "name": "east",
+        "labelLocation": {
+          "latitude": 1.35735,
+          "longitude": 103.94
+        }
+      },
+      {
+        "name": "west",
+        "labelLocation": {
+          "latitude": 1.35735,
+          "longitude": 103.7
+        }
+      },
+      {
+        "name": "central",
+        "labelLocation": {
+          "latitude": 1.35735,
+          "longitude": 103.82
+        }
+      }
+    ],
+    "items": [
+      {
+        "date": "2026-10-24",
+        "updatedTimestamp": "2026-10-24T15:30:54+08:00",
+        "timestamp": "2026-10-24T15:00:00+08:00",
+        "readings": {
+          "pm25_one_hourly": {
+            "north": 49,
+            "south": 37,
+            "west": 76,
+            "east": 53,
+            "central": 64
+          }
+        }
+      },
+      {
+        "date": "2026-10-24",
+        "updatedTimestamp": "2026-10-24T14:45:38+08:00",
+        "timestamp": "2026-10-24T14:00:00+08:00",
+        "readings": {
+          "pm25_one_hourly": {
+            "north": 65,
+            "south": 52,
+            "west": 88,
+            "east": 56,
+            "central": 53
+          }
+        }
+      },
+      {
+        "date": "2026-10-24",
+        "updatedTimestamp": "2026-10-24T13:45:46+08:00",
+        "timestamp": "2026-10-24T13:00:00+08:00",
+        "readings": {
+          "pm25_one_hourly": {
+            "north": 71,
+            "south": 38,
+            "west": 98,
+            "east": 51,
+            "central": 51
+          }
+        }
+      },
+      {
+        "date": "2026-10-24",
+        "updatedTimestamp": "2026-10-24T12:45:47+08:00",
+        "timestamp": "2026-10-24T12:00:00+08:00",
+        "readings": {
+          "pm25_one_hourly": {
+            "north": 83,
+            "south": 37,
+            "west": 106,
+            "east": 53,
+            "central": 54
+          }
+        }
+      },
+      {
+        "date": "2026-10-24",
+        "updatedTimestamp": "2026-10-24T11:45:37+08:00",
+        "timestamp": "2026-10-24T11:00:00+08:00",
+        "readings": {
+          "pm25_one_hourly": {
+            "central": 77,
+            "east": 67,
+            "north": 94,
+            "south": 53,
+            "west": 109
+          }
+        }
+      },
+      {
+        "date": "2026-10-24",
+        "updatedTimestamp": "2026-10-24T10:45:37+08:00",
+        "timestamp": "2026-10-24T10:00:00+08:00",
+        "readings": {
+          "pm25_one_hourly": {
+            "central": 92,
+            "east": 71,
+            "north": 84,
+            "south": 70,
+            "west": 97
+          }
+        }
+      },
+      {
+        "date": "2026-10-24",
+        "updatedTimestamp": "2026-10-24T09:45:37+08:00",
+        "timestamp": "2026-10-24T09:00:00+08:00",
+        "readings": {
+          "pm25_one_hourly": {
+            "central": 97,
+            "east": 74,
+            "north": 76,
+            "south": 66,
+            "west": 94
+          }
+        }
+      },
+      {
+        "date": "2026-10-24",
+        "updatedTimestamp": "2026-10-24T08:45:39+08:00",
+        "timestamp": "2026-10-24T08:00:00+08:00",
+        "readings": {
+          "pm25_one_hourly": {
+            "central": 99,
+            "east": 74,
+            "north": 76,
+            "south": 56,
+            "west": 106
+          }
+        }
+      },
+      {
+        "date": "2026-10-24",
+        "updatedTimestamp": "2026-10-24T07:45:39+08:00",
+        "timestamp": "2026-10-24T07:00:00+08:00",
+        "readings": {
+          "pm25_one_hourly": {
+            "central": 94,
+            "east": 68,
+            "north": 79,
+            "south": 78,
+            "west": 107
+          }
+        }
+      },
+      {
+        "date": "2026-10-24",
+        "updatedTimestamp": "2026-10-24T06:45:46+08:00",
+        "timestamp": "2026-10-24T06:00:00+08:00",
+        "readings": {
+          "pm25_one_hourly": {
+            "central": 81,
+            "east": 72,
+            "north": 75,
+            "south": 76,
+            "west": 115
+          }
+        }
+      },
+      {
+        "date": "2026-10-24",
+        "updatedTimestamp": "2026-10-24T05:45:38+08:00",
+        "timestamp": "2026-10-24T05:00:00+08:00",
+        "readings": {
+          "pm25_one_hourly": {
+            "central": 79,
+            "east": 76,
+            "north": 70,
+            "south": 67,
+            "west": 117
+          }
+        }
+      },
+      {
+        "date": "2026-10-24",
+        "updatedTimestamp": "2026-10-24T04:45:38+08:00",
+        "timestamp": "2026-10-24T04:00:00+08:00",
+        "readings": {
+          "pm25_one_hourly": {
+            "central": 84,
+            "east": 72,
+            "north": 74,
+            "south": 70,
+            "west": 113
+          }
+        }
+      },
+      {
+        "date": "2026-10-24",
+        "updatedTimestamp": "2026-10-24T03:45:37+08:00",
+        "timestamp": "2026-10-24T03:00:00+08:00",
+        "readings": {
+          "pm25_one_hourly": {
+            "central": 83,
+            "east": 76,
+            "north": 74,
+            "south": 77,
+            "west": 117
+          }
+        }
+      },
+      {
+        "date": "2026-10-24",
+        "updatedTimestamp": "2026-10-24T02:45:39+08:00",
+        "timestamp": "2026-10-24T02:00:00+08:00",
+        "readings": {
+          "pm25_one_hourly": {
+            "central": 90,
+            "east": 77,
+            "north": 70,
+            "south": 68,
+            "west": 129
+          }
+        }
+      },
+      {
+        "date": "2026-10-24",
+        "updatedTimestamp": "2026-10-24T01:45:38+08:00",
+        "timestamp": "2026-10-24T01:00:00+08:00",
+        "readings": {
+          "pm25_one_hourly": {
+            "central": 86,
+            "east": 71,
+            "north": 71,
+            "south": 84,
+            "west": 132
+          }
+        }
+      },
+      {
+        "date": "2026-10-24",
+        "updatedTimestamp": "2026-10-24T00:45:42+08:00",
+        "timestamp": "2026-10-24T00:00:00+08:00",
+        "readings": {
+          "pm25_one_hourly": {
+            "central": 92,
+            "east": 77,
+            "north": 74,
+            "south": 66,
+            "west": 146
+          }
+        }
+      }
+    ]
+  },
+  "errorMsg": ""
+}

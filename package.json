@@ -1,0 +1,14 @@
+{
+  "name": "sg-haze-widget",
+  "version": "1.0.0",
+  "description": "Scriptable iOS widget showing Singapore PM2.5 and PSI for one region",
+  "private": true,
+  "type": "commonjs",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test",
+    "fixtures": "node scripts/fetch-fixtures.js"
+  }
+}
