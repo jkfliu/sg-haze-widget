@@ -8,8 +8,8 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "node --test",
-    "coverage": "node --test --experimental-test-coverage",
+    "test": "node --test test/*.test.js",
+    "coverage": "node --test --experimental-test-coverage test/*.test.js",
     "fixtures": "node scripts/fetch-fixtures.js"
   }
 }

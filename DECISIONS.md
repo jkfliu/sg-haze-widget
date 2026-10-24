@@ -4,7 +4,7 @@ Changes to the original plan, agreed on 2026-10-24.
 
 | # | Topic | Decision |
 |---|-------|----------|
-| 1 | Refresh time | `nextRefresh(now)` returns **50 minutes past** the next hour, not 5 past. NEA publishes each hour's reading at about :45. |
+| 1 | Refresh time | `nextRefresh(now)` returns the **next :50 strictly after now** (3:39pm → 3:50pm; 3:50pm or 3:55pm → 4:50pm), not 5 past. NEA publishes each hour's reading at about :45. |
 | 2 | Last refresh shown | If there's room, the widget also shows when it last refreshed, as well as the time of the reading. |
 | 3 | 24-hour window | The window **excludes** the reading from exactly 24 hours ago (`now - 24h < time <= now`), giving at most 24 points. |
 | 4 | Update install path | The installer overwrites the script at its own location (`module.filename`), so it works whether scripts are stored in iCloud or on the device. |

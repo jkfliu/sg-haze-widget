@@ -1,12 +1,8 @@
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const path = require('node:path');
 const { normaliseRegion, parsePm25Series, parseLatestPsi } = require('../src/core.js');
+const { fixture, sgt, mulberry32 } = require('./helpers.js');
 
-const fixture = (name) =>
-  JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures', name), 'utf8'));
-const sgt = (iso) => new Date(`${iso}+08:00`).getTime();
 const REGIONS = ['north', 'south', 'east', 'west', 'central'];
 
 describe('normaliseRegion', () => {
@@ -105,14 +101,6 @@ describe('parsePm25Series with malformed input', () => {
 
 // Property test with a seeded PRNG (no fast-check: the plan forbids dependencies).
 describe('parsePm25Series properties', () => {
-  function mulberry32(seed) {
-    return () => {
-      seed = (seed + 0x6d2b79f5) | 0;
-      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
-  }
   const JUNK = [null, undefined, 'x', -5, NaN, Infinity];
 
   test('output is sorted, valid, and keeps exactly the valid readings', () => {
